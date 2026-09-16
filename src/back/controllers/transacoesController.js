@@ -10,7 +10,7 @@ const transacoesController = {
 
       const { operacao, valor, categoria, descricao,data } = req.body;
 
-      const novaTransacoes = await transacoesService.criar(
+      const novaTransacao = await transacoesService.criar(
         operacao,
         valor,
         categoria,
@@ -18,7 +18,7 @@ const transacoesController = {
         data,
       );
 
-      return res.status(201).json(novaTransacoes);
+      return res.status(201).json(novaTransacao);
     } catch (erro) {
       res.status(400).json(erro);
     }
