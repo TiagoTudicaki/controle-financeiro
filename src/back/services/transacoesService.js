@@ -1,9 +1,9 @@
 const transacoesModel = require("../models/transacoesModel");
 
 const transacoesService = {
-  async criar(novaTransacao) {
-    const { operacao, valor, categoria, descricao, data } = novaTransacao;
+  async criar(dadoTransacao) {
 
+    const{operacao, valor, categoria, descricao, data} = dadoTransacao;
     //-----Operacao----
     if (operacao !== "receita" && operacao !== "despesa") {
       throw new Error("Operação deve ser receita ou despesa");
@@ -32,18 +32,18 @@ const transacoesService = {
     }
     //-----categoria-----
 
-    if(operacao === "despesa"){
+    if (operacao === "despesa") {
       if (
-      categoria !== "necessidade" &&
-      categoria !== "desejo" &&
-      categoria !== "poupanca"
-    ) {
-      throw new Error("Categoria deve ser necessidade, desejo ou poupanca");
-    }
+        categoria !== "necessidade" &&
+        categoria !== "desejo" &&
+        categoria !== "poupanca"
+      ) {
+        throw new Error("Categoria deve ser necessidade, desejo ou poupanca");
+      }
     }
 
-    if(operacao === "receita"){
-      if(categoria !== null){
+    if (operacao === "receita") {
+      if (categoria !== null) {
         throw new Error("Não existe uma categoria para receita");
       }
     }
@@ -80,25 +80,24 @@ const transacoesService = {
     const dataConvertida = new Date(dataTrimada);
 
     if (
-      dataConvertida.getFullYear() !== anoNumero ||
-      dataConvertida.getMonth() + 1 !== mesNumero ||
-      dataConvertida.getDate() !== diaNumero
+      dataConvertida.getUTCFullYear() !== anoNumero ||
+      dataConvertida.getUTCMonth() + 1 !== mesNumero ||
+      dataConvertida.getUTCDate() !== diaNumero
     ) {
       throw new Error("Data inválida (dia ou mês fora do intervalo real)");
     }
 
+    const transacaoValidada = {
+      operacao,
+      valor: valorConvertido,
+      categoria,
+      descricao: descricaoPadronizada,
+      data: dataConvertida,
+    };
 
-    const transacao = {
-    operacao,
-    valor: valorConvertido,
-    categoria,
-    descricao : descricaoPadronizada,
-    data: dataConvertida,
-  }
-
-  const dados = await transacoesModel.criar(transacao);
-  return dados;
+    const dados = await transacoesModel.criar(transacaoValidada);
+    return dados;
   },
-
-  
 };
+
+module.exports = transacoesService;
