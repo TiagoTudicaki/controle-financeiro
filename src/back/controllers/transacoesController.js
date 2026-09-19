@@ -8,19 +8,21 @@ const transacoesController = {
         throw erro;
       }
 
-      const { operacao, valor, categoria, descricao,data } = req.body;
+      const { operacao, valor, categoria, descricao, data } = req.body;
 
-      const novaTransacao = await transacoesService.criar(
+      const dadoTransacao = {
         operacao,
         valor,
         categoria,
         descricao,
         data,
-      );
+      };
+
+      const novaTransacao = await transacoesService.criar(dadoTransacao);
 
       return res.status(201).json(novaTransacao);
     } catch (erro) {
-      res.status(400).json(erro);
+      res.status(400).json({ mensagem: erro.message });
     }
   },
 };
