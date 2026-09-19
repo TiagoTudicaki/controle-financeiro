@@ -39,6 +39,9 @@ const transacoesController = {
       }
 
       const listarTransacao = await transacoesService.listar(dadoTransacao);
+      if(listarTransacao.length === 0){
+        return res.status(200).json({mensagem:"Nenhuma transação econtrada"});
+      }
       return res.status(200).json(listarTransacao);
     }catch(erro){
       res.status(400).json({mensagem: erro.message});
