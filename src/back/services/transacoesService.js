@@ -1,4 +1,5 @@
-const transacoesModel = require("../models/transacoesModel");
+const transacoesModel = require("../models/transacoesModel");const consultaFiltrada = require("../utils/filtragemDeConsulta");
+;
 
 const transacoesService = {
   async criar(dadoTransacao) {
@@ -98,6 +99,14 @@ const transacoesService = {
     const dados = await transacoesModel.criar(transacaoValidada);
     return dados;
   },
+
+  async listar(dadoTransacao){
+    const transacaoFiltrada = consultaFiltrada(dadoTransacao);
+
+    const transacao = await transacoesModel.listar(transacaoFiltrada);
+
+    return transacao;
+  }
 };
 
 module.exports = transacoesService;
