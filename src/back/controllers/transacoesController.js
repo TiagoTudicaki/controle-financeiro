@@ -25,6 +25,25 @@ const transacoesController = {
       res.status(400).json({ mensagem: erro.message });
     }
   },
+
+  async listar(req, res){
+    try{
+      const{operacao, valor, categoria, descricao, data} = req.query;
+
+      const dadoTransacao = {
+        operacao,
+        valor,
+        categoria,
+        descricao,
+        data,
+      }
+
+      const listarTransacao = await transacoesService.listar(dadoTransacao);
+      return res.status(200).json(listarTransacao);
+    }catch(erro){
+      res.status(400).json({mensagem: erro.message});
+    }
+  }
 };
 
 module.exports = transacoesController;
