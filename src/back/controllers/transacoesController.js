@@ -46,6 +46,37 @@ const transacoesController = {
     }catch(erro){
       res.status(400).json({mensagem: erro.message});
     }
+  },
+
+  async atualizar(req, res){
+    try{
+      if(Object.keys(req.body).length === 0){
+        const erro = new Error("Atualizar precisa de pelo menos um campo");
+        throw erro;
+      }
+
+      if(Object.keys(req.params).length === 0){
+        const erro = new Error("É necessário id");
+        throw erro;
+      }
+
+      const{id} = req.params;
+      const{operacao, valor, categoria, descricao, data} = req.body;
+
+      const dadoTransacao = {
+        id,
+        operacao,
+        valor,
+        categoria,
+        descricao,
+        data,
+      }
+
+      const atualizarTransacao = await transacoesService.atualizar(dadoTransacao);
+      return res.status(200).json(atualizarTransacao);
+    }catch(erro){
+      res.status(400).json({mensagem: erro.message});
+    }
   }
 };
 
