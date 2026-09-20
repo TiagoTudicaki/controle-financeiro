@@ -127,118 +127,131 @@ const transacoesService = {
 
     //----operacao-----
 
-    if(operacao != null){
-      if(typeof operacao !== "string"){
+    if (operacao != null) {
+      if (operacao === "receita" && categoria !== null) {
+        throw new Error("Receita não possui categoria e deve ser nulo");
+      }
+      if (operacao === "despesa" && categoria == null) {
+        throw new Error("Despesa precisa que categoria seja informada");
+      }
+      if (typeof operacao !== "string") {
         throw new Error("O campo operação deve ser texto");
+      }
+
+      if (operacao !== "receita" && operacao !== "despesa") {
+        throw new Error("Operação deve ser receita ou despesa");
       }
     }
 
     //----valor-----
 
     let valorConvertido;
-    if(valor != null){
-
-      if(typeof valor !== "string"){
-      throw new Error("O campos valor deve ser texto");
-    }
+    if (valor != null) {
+      if (typeof valor !== "string") {
+        throw new Error("O campos valor deve ser texto");
+      }
       const valorNormalizado = valor.trim().replace(",", ".");
 
-    const regexvalor = /^\d+(\.\d{1,2})?$/;
+      const regexvalor = /^\d+(\.\d{1,2})?$/;
 
-    if (!regexvalor.test(valorNormalizado)) {
-      throw new Error(
-        "O campo valor deve ser um número válido (ex: 150.00 ou 150,00",
-      );
-    }
+      if (!regexvalor.test(valorNormalizado)) {
+        throw new Error(
+          "O campo valor deve ser um número válido (ex: 150.00 ou 150,00",
+        );
+      }
 
-    valorConvertido = Number(valorNormalizado);
+      valorConvertido = Number(valorNormalizado);
 
-    if (valorConvertido <= 0) {
-      throw new Error("O campo valor deve ser maior que zero");
-    }
+      if (valorConvertido <= 0) {
+        throw new Error("O campo valor deve ser maior que zero");
+      }
     }
 
     //----categoria----
 
-    if(categoria != null){
-      if(typeof categoria !== "string"){
+    if (categoria != null) {
+      if (operacao == null) {
+        throw new Error(
+          "É necessário informa operação para atualizar categoria",
+        );
+      }
+      if (typeof categoria !== "string") {
         throw new Error("O campo categoria deve ser texto");
       }
-       if (operacao === "despesa") {
+
       if (
         categoria !== "necessidade" &&
         categoria !== "desejo" &&
         categoria !== "poupanca"
       ) {
-        throw new Error("Categoria deve ser necessidade, desejo ou poupanca");
+        throw new Error(
+          " A categoria de despesa deve ser necessidade, desejo ou poupanca",
+        );
       }
     }
 
-    if (operacao === "receita") {
-      if (categoria !== null) {
-        throw new Error("Não existe uma categoria para receita");
-      }
-    }
+    if (operacao == null && categoria === null) {
+      throw new Error("Categoria so pode ser nulo se operação for receita");
     }
     //---descricao----
 
     let descricaoPadronizada;
-      if(descricao != null){
-        if (typeof descricao !== "string") {
-      throw new Error("O campo descrição deve ser texto");
-    }
+    if (descricao != null) {
+      if (typeof descricao !== "string") {
+        throw new Error("O campo descrição deve ser texto");
+      }
 
-    descricaoPadronizada = descricao.trim().toLocaleLowerCase();
+      descricaoPadronizada = descricao.trim().toLocaleLowerCase();
     }
-
-     
 
     //----data-----
 
     let dataConvertida;
-    if(data != null){
-       if (typeof data !== "string") {
-      throw new Error("O campo data deve ser texto");
+    if (data != null) {
+      if (typeof data !== "string") {
+        throw new Error("O campo data deve ser texto");
+      }
+
+      const dataTrimada = data.trim();
+
+      const regexData = /^(\d{4})-(\d{2})-(\d{2})$/;
+      const match = dataTrimada.match(regexData);
+
+      if (!match) {
+        throw new Error(
+          "Data deve estar no formato AAAA-MM-DD (ex: 2026-09-17)",
+        );
+      }
+
+      const [, ano, mes, dia] = match;
+
+      const anoNumero = Number(ano);
+      const mesNumero = Number(mes);
+      const diaNumero = Number(dia);
+
+      dataConvertida = new Date(dataTrimada);
+
+      if (
+        dataConvertida.getUTCFullYear() !== anoNumero ||
+        dataConvertida.getUTCMonth() + 1 !== mesNumero ||
+        dataConvertida.getUTCDate() !== diaNumero
+      ) {
+        throw new Error("Data inválida (dia ou mês fora do intervalo real)");
+      }
     }
 
-    const dataTrimada = data.trim();
-
-    const regexData = /^(\d{4})-(\d{2})-(\d{2})$/;
-    const match = dataTrimada.match(regexData);
-
-    if (!match) {
-      throw new Error("Data deve estar no formato AAAA-MM-DD (ex: 2026-09-17)");
-    }
-
-    const [, ano, mes, dia] = match;
-
-    const anoNumero = Number(ano);
-    const mesNumero = Number(mes);
-    const diaNumero = Number(dia);
-
-     dataConvertida = new Date(dataTrimada);
-
-    if (
-      dataConvertida.getUTCFullYear() !== anoNumero ||
-      dataConvertida.getUTCMonth() + 1 !== mesNumero ||
-      dataConvertida.getUTCDate() !== diaNumero
-    ) {
-      throw new Error("Data inválida (dia ou mês fora do intervalo real)");
-    }
-    }
-  
     const transacaoValidada = {
-      id:id_Numerico,
+      id: id_Numerico,
       operacao: operacao,
       valor: valorConvertido,
       categoria: categoria,
-      descricao : descricaoPadronizada,
+      descricao: descricaoPadronizada,
       data: dataConvertida,
-    }
+    };
 
-    const atualizarTransacao = await transacoesModel.atualizar(transacaoValidada);
+    const atualizarTransacao =
+      await transacoesModel.atualizar(transacaoValidada);
     return atualizarTransacao;
-    
   },
 };
 
