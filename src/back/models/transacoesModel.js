@@ -19,7 +19,7 @@ const transacoesModel = {
     };
   },
 
-  async filtrar(transacaoFiltrada) {
+  async listar(transacaoFiltrada) {
     const campoParciais = ["descricao"];
 
     const camposExatos = ["operacao", "valor", "categoria", "data"];
