@@ -1,0 +1,1022 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Controle financeiro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     Paleta: gelo (fundo), petróleo (painel de instrumentos) e as
+     três cores de categoria, que lembram os cilindros de gás
+     refrigerante (azul, laranja e verde).
+     ============================================================ */
+  :root {
+    --gelo: #EAF1F4;
+    --tinta: #0F2A33;
+    --tinta-suave: #4B6873;
+    --linha: #C5D4DA;
+
+    --painel: #11303B;
+    --painel-2: #1B4552;
+    --painel-texto: #E8F1F4;
+    --painel-suave: #9DBBC6;
+
+    --nec: #4FA3E0;
+    --des: #F0A03C;
+    --poup: #55BE8A;
+
+    --ok-no-painel: #8FE0B4;
+    --alerta-no-painel: #FFB39A;
+    --erro: #B3382A;
+    --foco: #1E6FC0;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+
+  body {
+    margin: 0;
+    background: var(--gelo);
+    color: var(--tinta);
+    font-family: "Public Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    font-variant-numeric: tabular-nums;
+  }
+
+  h1, h2 {
+    margin: 0;
+    font-family: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+    font-weight: 600;
+    line-height: 1.05;
+  }
+
+  button { font: inherit; cursor: pointer; }
+  :focus-visible { outline: 3px solid var(--foco); outline-offset: 2px; }
+  .painel :focus-visible { outline-color: #8CC8F5; }
+
+  .container { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+
+  /* ---------- Topo ---------- */
+  .topo {
+    display: flex; flex-wrap: wrap; gap: 16px;
+    align-items: flex-end; justify-content: space-between;
+    padding: 32px 0 20px;
+  }
+  .topo h1 { font-size: 44px; }
+  .sub { margin: 6px 0 0; color: var(--tinta-suave); }
+  .topo-acoes { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+  .botao-principal, .botao-secundario, .botao-perigo {
+    min-height: 44px; padding: 0.6rem 1.2rem;
+    border-radius: 4px; font-weight: 600; border: 1px solid transparent;
+  }
+  .botao-principal { background: var(--painel); color: #fff; }
+  .botao-principal:hover { background: var(--painel-2); }
+  .botao-secundario { background: transparent; color: var(--tinta); border-color: var(--linha); }
+  .botao-secundario:hover { background: #dbe6ea; }
+  .botao-perigo { background: var(--erro); color: #fff; }
+  .botao-perigo:hover { background: #952d21; }
+  .botao-principal:disabled, .botao-perigo:disabled { opacity: 0.6; cursor: progress; }
+
+  .botao-texto {
+    background: none; border: 0; min-height: 44px; padding: 0.5rem 0.75rem;
+    color: var(--tinta-suave); text-decoration: underline; text-underline-offset: 3px;
+  }
+
+  /* ---------- Avisos ---------- */
+  .aviso {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px;
+    margin-bottom: 16px; padding: 12px 16px;
+    border-left: 4px solid var(--nec); background: #DDEBF5;
+  }
+  .aviso p { margin: 0; flex: 1 1 320px; }
+  .aviso--erro { border-left-color: var(--erro); background: #F9E4E0; }
+  .aviso .botao-secundario { min-height: 40px; padding: 0.4rem 0.9rem; }
+
+  /* ---------- Painel de instrumentos ---------- */
+  .painel {
+    background: var(--painel); color: var(--painel-texto);
+    border-radius: 6px; padding: 24px 28px 32px;
+    display: grid;
+    grid-template-columns: minmax(240px, 340px) 1fr;
+    grid-template-areas: "topo topo" "anel cats";
+    column-gap: 48px; row-gap: 20px;
+  }
+  .painel-topo { grid-area: topo; display: flex; align-items: center; gap: 14px; }
+  .painel-topo h2 { font-size: 36px; min-width: 9ch; }
+  .icone {
+    width: 44px; height: 44px; display: grid; place-items: center;
+    background: transparent; color: inherit;
+    border: 1px solid rgba(255, 255, 255, 0.28); border-radius: 4px;
+  }
+  .icone:hover { background: rgba(255, 255, 255, 0.1); }
+  .icone svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  .painel-anel { grid-area: anel; }
+  .painel-anel svg { display: block; width: 100%; max-width: 340px; height: auto; margin: 0 auto; }
+  .trilho { fill: none; stroke: rgba(255, 255, 255, 0.08); }
+  .arco { fill: none; transition: stroke-dasharray 0.9s cubic-bezier(0.2, 0.7, 0.2, 1); }
+  .anel-rotulo { fill: var(--painel-suave); font: 500 12.5px "Public Sans", sans-serif; }
+  .anel-valor { fill: var(--painel-texto); font: 600 30px "Barlow Condensed", "Arial Narrow", sans-serif; }
+  .legenda-anel { margin: 12px auto 0; max-width: 300px; font-size: 13px; color: var(--painel-suave); }
+
+  .painel-categorias { grid-area: cats; display: grid; gap: 26px; align-content: center; }
+  .cat-topo { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+  .cat-nome { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 17px; }
+  .ponto { width: 12px; height: 12px; border-radius: 50%; flex: none; }
+  .cat-pct {
+    font-family: "Barlow Condensed", "Arial Narrow", sans-serif;
+    font-size: 36px; font-weight: 600; line-height: 1; text-align: right;
+  }
+  .cat-meta { display: block; font: 400 13px "Public Sans", sans-serif; color: var(--painel-suave); }
+  .barra { position: relative; height: 10px; margin: 12px 0 10px; border-radius: 2px; background: rgba(255, 255, 255, 0.12); }
+  .barra-fill { height: 100%; border-radius: 2px; }
+  .barra-marca { position: absolute; top: -5px; width: 2px; height: 20px; background: var(--painel-texto); }
+  .cat-base { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 16px; font-size: 14px; }
+  .cat-valor { font-weight: 600; }
+  .cat-status { color: var(--painel-suave); }
+  .cat-status.ok { color: var(--ok-no-painel); }
+  .cat-status.alerta { color: var(--alerta-no-painel); }
+  .cat-aviso { margin: 0; font-size: 14px; color: var(--alerta-no-painel); }
+
+  /* ---------- Resumo ---------- */
+  .resumo {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    margin: 28px 0 8px; border-top: 1px solid var(--linha); border-bottom: 1px solid var(--linha);
+  }
+  .resumo-item { padding: 16px 20px; }
+  .resumo-item + .resumo-item { border-left: 1px solid var(--linha); }
+  .resumo-rotulo { font-size: 14px; color: var(--tinta-suave); }
+  .resumo-valor { font-family: "Barlow Condensed", "Arial Narrow", sans-serif; font-size: 38px; font-weight: 600; line-height: 1.15; }
+  .resumo-valor.negativo { color: var(--erro); }
+
+  /* ---------- Lançamentos ---------- */
+  .lancamentos { margin-top: 32px; padding-bottom: 72px; }
+  .lancamentos-topo { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+  .lancamentos h2 { font-size: 32px; }
+  .filtros { display: flex; gap: 6px; }
+  .filtro {
+    min-height: 40px; padding: 0.3rem 1rem; border-radius: 999px;
+    background: transparent; color: var(--tinta); border: 1px solid var(--linha);
+  }
+  .filtro[aria-pressed="true"] { background: var(--painel); color: #fff; border-color: var(--painel); }
+
+  .lista { list-style: none; margin: 0; padding: 0; }
+  .linha {
+    display: grid; align-items: center; gap: 4px 12px;
+    grid-template-columns: 56px minmax(0, 1fr) 130px 150px 150px;
+    padding: 12px 4px; border-bottom: 1px solid var(--linha);
+  }
+  .linha-data { color: var(--tinta-suave); }
+  .linha-desc { overflow-wrap: anywhere; font-weight: 500; }
+  .linha-valor { text-align: right; font-weight: 600; }
+  .linha-valor--receita { color: #1B6B4A; }
+  .linha-acoes { display: flex; justify-content: flex-end; gap: 2px; }
+  .acao {
+    min-height: 44px; padding: 0.5rem 0.65rem; background: none; border: 0;
+    color: var(--tinta); font-weight: 600; text-decoration: underline; text-underline-offset: 3px;
+  }
+  .acao:hover { background: #dbe6ea; }
+  .acao--excluir { color: var(--erro); }
+
+  .chip {
+    justify-self: start; display: inline-block; padding: 2px 10px;
+    border-radius: 999px; font-size: 13px; font-weight: 600;
+    background: #E1E9EC; color: #33505A;
+  }
+  .chip--necessidade { background: #DCEBF7; color: #184F78; }
+  .chip--desejo { background: #FBE6C8; color: #7A4106; }
+  .chip--poupanca { background: #D3EEDF; color: #1B5F3C; }
+
+  .vazio { margin: 24px 0; color: var(--tinta-suave); }
+
+  /* ---------- Janelas (dialog) ---------- */
+  dialog {
+    width: min(440px, 92vw); padding: 24px; border: 0; border-radius: 6px;
+    background: #fff; color: var(--tinta);
+    box-shadow: 0 20px 60px rgba(15, 42, 51, 0.35);
+  }
+  dialog::backdrop { background: rgba(15, 42, 51, 0.55); }
+  dialog h2 { font-size: 30px; margin-bottom: 16px; }
+  .campo { margin-bottom: 16px; }
+  .campo label, .campo legend { display: block; margin-bottom: 6px; font-size: 14px; font-weight: 600; padding: 0; }
+  .campo input[type="text"], .campo input[type="date"], .campo select {
+    width: 100%; min-height: 44px; padding: 0.5rem 0.75rem;
+    border: 1px solid #9DB3BB; border-radius: 4px; background: #fff; color: var(--tinta); font: inherit;
+  }
+  fieldset.campo { border: 0; margin: 0 0 16px; padding: 0; }
+  .segmentado { display: flex; }
+  .segmentado input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .segmentado label {
+    flex: 1; min-height: 44px; display: grid; place-items: center; margin: 0;
+    border: 1px solid #9DB3BB; cursor: pointer; font-weight: 600;
+  }
+  .segmentado label:first-of-type { border-radius: 4px 0 0 4px; }
+  .segmentado label:last-of-type { border-radius: 0 4px 4px 0; border-left: 0; }
+  .segmentado input:checked + label { background: var(--painel); border-color: var(--painel); color: #fff; }
+  .segmentado input:focus-visible + label { outline: 3px solid var(--foco); outline-offset: 2px; }
+  .erro-form { margin: 0 0 16px; padding: 10px 12px; background: #F9E4E0; border-left: 4px solid var(--erro); font-size: 14px; }
+  .dlg-acoes { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
+  #excluir-texto { margin: 0 0 20px; }
+
+  /* ---------- Toast ---------- */
+  .toast {
+    position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
+    max-width: min(520px, 92vw); padding: 12px 18px; border-radius: 4px;
+    background: var(--painel); color: #fff; font-weight: 500; z-index: 10;
+  }
+  .toast--erro { background: var(--erro); }
+
+  /* ---------- Telas menores ---------- */
+  @media (max-width: 860px) {
+    .linha {
+      grid-template-columns: 52px minmax(0, 1fr) auto;
+      grid-template-areas: "data desc valor" ". chip acoes";
+    }
+    .linha-data { grid-area: data; }
+    .linha-desc { grid-area: desc; }
+    .linha-valor { grid-area: valor; }
+    .chip { grid-area: chip; }
+    .linha-acoes { grid-area: acoes; }
+  }
+  @media (max-width: 760px) {
+    .painel { grid-template-columns: 1fr; grid-template-areas: "topo" "anel" "cats"; padding: 20px; }
+    .topo h1 { font-size: 36px; }
+  }
+  @media (max-width: 560px) {
+    .resumo { grid-template-columns: 1fr; }
+    .resumo-item + .resumo-item { border-left: 0; border-top: 1px solid var(--linha); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .arco { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header class="topo">
+    <div>
+      <h1>Controle financeiro</h1>
+      <p class="sub">Como a sua renda do mês foi dividida.</p>
+    </div>
+    <div class="topo-acoes">
+      <button id="btn-demo" class="botao-texto" type="button">Ver dados de exemplo</button>
+      <button id="btn-nova" class="botao-principal" type="button">Nova transação</button>
+    </div>
+  </header>
+
+  <div id="aviso" class="aviso" role="status" hidden></div>
+
+  <main>
+    <section class="painel" aria-labelledby="mes-rotulo">
+      <div class="painel-topo">
+        <button id="mes-anterior" class="icone" type="button" aria-label="Mês anterior">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+        </button>
+        <h2 id="mes-rotulo"></h2>
+        <button id="mes-proximo" class="icone" type="button" aria-label="Próximo mês">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+
+      <div class="painel-anel">
+        <svg id="anel" viewBox="0 0 240 240" role="img" aria-label="Divisão da renda do mês"></svg>
+        <p class="legenda-anel">O anel de fora mostra a meta 50/30/20. O anel de dentro mostra como a renda foi usada.</p>
+      </div>
+
+      <div id="categorias" class="painel-categorias"></div>
+    </section>
+
+    <section id="resumo" class="resumo" aria-label="Resumo do mês"></section>
+
+    <section class="lancamentos" aria-labelledby="titulo-lancamentos">
+      <div class="lancamentos-topo">
+        <h2 id="titulo-lancamentos">Lançamentos</h2>
+        <div class="filtros" role="group" aria-label="Filtrar lançamentos">
+          <button class="filtro" type="button" data-filtro="todas" aria-pressed="true">Todas</button>
+          <button class="filtro" type="button" data-filtro="receita" aria-pressed="false">Receitas</button>
+          <button class="filtro" type="button" data-filtro="despesa" aria-pressed="false">Despesas</button>
+        </div>
+      </div>
+      <ul id="lista" class="lista"></ul>
+      <p id="lista-vazia" class="vazio" hidden></p>
+    </section>
+  </main>
+</div>
+
+<!-- Janela: nova transação / editar transação -->
+<dialog id="dlg-form" aria-labelledby="dlg-form-titulo">
+  <form id="form" novalidate>
+    <h2 id="dlg-form-titulo">Nova transação</h2>
+
+    <fieldset class="campo">
+      <legend>Tipo</legend>
+      <div class="segmentado">
+        <input type="radio" name="operacao" id="op-despesa" value="despesa" checked>
+        <label for="op-despesa">Despesa</label>
+        <input type="radio" name="operacao" id="op-receita" value="receita">
+        <label for="op-receita">Receita</label>
+      </div>
+    </fieldset>
+
+    <div class="campo" id="campo-categoria">
+      <label for="categoria">Categoria</label>
+      <select id="categoria">
+        <option value="necessidade">Necessidade</option>
+        <option value="desejo">Desejo</option>
+        <option value="poupanca">Poupança</option>
+      </select>
+    </div>
+
+    <div class="campo">
+      <label for="valor">Valor</label>
+      <input id="valor" type="text" inputmode="decimal" autocomplete="off" placeholder="150,00">
+    </div>
+
+    <div class="campo">
+      <label for="descricao">Descrição</label>
+      <input id="descricao" type="text" autocomplete="off">
+    </div>
+
+    <div class="campo">
+      <label for="data">Data</label>
+      <input id="data" type="date">
+    </div>
+
+    <p id="erro-form" class="erro-form" role="alert" hidden></p>
+
+    <div class="dlg-acoes">
+      <button id="cancelar-form" class="botao-secundario" type="button">Cancelar</button>
+      <button id="salvar-form" class="botao-principal" type="submit">Salvar</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Janela: confirmar exclusão -->
+<dialog id="dlg-excluir" aria-labelledby="dlg-excluir-titulo">
+  <h2 id="dlg-excluir-titulo">Excluir transação?</h2>
+  <p id="excluir-texto"></p>
+  <div class="dlg-acoes">
+    <button id="cancelar-excluir" class="botao-secundario" type="button">Cancelar</button>
+    <button id="confirmar-excluir" class="botao-perigo" type="button">Excluir</button>
+  </div>
+</dialog>
+
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+"use strict";
+
+/* ==================================================================
+   1. CONFIGURAÇÃO
+   Ajuste estas linhas para bater com o seu servidor.
+   ================================================================== */
+const CONFIG = {
+  API_URL: "http://localhost:3000",   // endereço onde a sua API está rodando
+  ROTA: "/transacoes",                // rota base das transações
+  METODO_ATUALIZAR: "PUT",            // troque para "PATCH" se a sua rota for PATCH
+  COMECAR_COM_DADOS_DE_EXEMPLO: false // true = abre já com dados de mentira
+};
+
+const CATEGORIAS = ["necessidade", "desejo", "poupanca"];
+const METAS = { necessidade: 0.5, desejo: 0.3, poupanca: 0.2 };
+const NOME_CATEGORIA = { necessidade: "Necessidades", desejo: "Desejos", poupanca: "Poupança" };
+const NOME_CHIP = { necessidade: "Necessidade", desejo: "Desejo", poupanca: "Poupança" };
+const COR_CATEGORIA = { necessidade: "var(--nec)", desejo: "var(--des)", poupanca: "var(--poup)" };
+
+/* ==================================================================
+   2. ESTADO (o que a tela "lembra")
+   ================================================================== */
+const estado = {
+  transacoes: [],
+  mes: chaveDoMes(new Date()),   // mês que está na tela, ex.: "2026-09"
+  filtro: "todas",               // "todas" | "receita" | "despesa"
+  demo: CONFIG.COMECAR_COM_DADOS_DE_EXEMPLO,
+  erroCarga: null,
+  editando: null,                // transação em edição (null = criando uma nova)
+  excluindo: null                // transação que está para ser excluída
+};
+
+/* ==================================================================
+   3. FUNÇÕES AUXILIARES
+   ================================================================== */
+function el(id) { return document.getElementById(id); }
+
+function arredondar(numero) { return Math.round(numero * 100) / 100; }
+
+function moeda(numero) {
+  return numero.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+function moedaComSinal(numero) {
+  return (numero < 0 ? "− " : "") + moeda(Math.abs(numero));
+}
+
+function escaparHtml(texto) {
+  return String(texto)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+function capitalizar(texto) {
+  return texto.charAt(0).toUpperCase() + texto.slice(1);
+}
+
+// "2026-09" a partir de uma data (usa o fuso local do navegador)
+function chaveDoMes(data) {
+  return data.getFullYear() + "-" + String(data.getMonth() + 1).padStart(2, "0");
+}
+
+function deslocarMes(chave, quantidade) {
+  const [ano, mes] = chave.split("-").map(Number);
+  return chaveDoMes(new Date(ano, mes - 1 + quantidade, 1));
+}
+
+function rotuloDoMes(chave) {
+  const [ano, mes] = chave.split("-").map(Number);
+  const texto = new Date(ano, mes - 1, 1).toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+  return capitalizar(texto);
+}
+
+function dataDeHoje() {
+  const agora = new Date();
+  return chaveDoMes(agora) + "-" + String(agora.getDate()).padStart(2, "0");
+}
+
+// "2026-09-17" -> "17/09". Trabalha só com o texto, para não sofrer com fuso horário.
+function dataCurta(dataTexto) {
+  const [, mes, dia] = dataTexto.split("-");
+  return dia + "/" + mes;
+}
+
+/* A API pode devolver a data como "2026-09-17" ou como "2026-09-17T03:00:00.000Z"
+   e o valor como número ou como texto ("150.00"). Aqui tudo vira o mesmo formato. */
+function normalizarTransacao(t) {
+  return {
+    id: t.id,
+    operacao: t.operacao,
+    valor: Number(t.valor),
+    categoria: t.categoria ?? null,
+    descricao: t.descricao ?? "",
+    data: String(t.data).slice(0, 10)
+  };
+}
+
+/* ==================================================================
+   4. CAMADA DE API
+   Toda conversa com o servidor passa por aqui. Se a sua rota tiver outro
+   formato, é só nesta parte que você mexe.
+   ================================================================== */
+async function requisicao(metodo, caminho, corpo) {
+  const opcoes = { method: metodo, headers: {} };
+  if (corpo !== undefined) {
+    opcoes.headers["Content-Type"] = "application/json";
+    opcoes.body = JSON.stringify(corpo);
+  }
+
+  let resposta;
+  try {
+    resposta = await fetch(CONFIG.API_URL + caminho, opcoes);
+  } catch (erro) {
+    throw new Error("Não consegui falar com a API em " + CONFIG.API_URL + ". Ela está rodando e liberando o CORS?");
+  }
+
+  let dados = null;
+  try { dados = await resposta.json(); } catch (erro) { /* a resposta não veio em JSON */ }
+
+  if (!resposta.ok) {
+    throw new Error((dados && dados.mensagem) || "A API respondeu com o erro " + resposta.status + ".");
+  }
+  return dados;
+}
+
+const apiReal = {
+  async listar() {
+    const dados = await requisicao("GET", CONFIG.ROTA);
+    const lista = Array.isArray(dados) ? dados : (dados && (dados.transacoes || dados.dados)) || [];
+    return lista.map(normalizarTransacao);
+  },
+  criar(payload) { return requisicao("POST", CONFIG.ROTA, payload); },
+  atualizar(id, payload) { return requisicao(CONFIG.METODO_ATUALIZAR, CONFIG.ROTA + "/" + id, payload); },
+  excluir(id) { return requisicao("DELETE", CONFIG.ROTA + "/" + id); }
+};
+
+/* Dados de mentira, guardados só na memória da página, para você ver a tela
+   funcionando antes de a rota de listagem existir. Nada aqui vai para a sua API. */
+const apiDemo = (function () {
+  let banco = null;
+
+  function pausa() { return new Promise(function (ok) { setTimeout(ok, 150); }); }
+
+  function iniciar() {
+    if (banco) { return; }
+    const mesAtual = chaveDoMes(new Date());
+    const mesAnterior = deslocarMes(mesAtual, -1);
+    banco = [];
+    function add(mes, dia, operacao, categoria, valor, descricao) {
+      banco.push({
+        id: banco.length + 1, operacao: operacao, categoria: categoria, valor: valor,
+        descricao: descricao, data: mes + "-" + String(dia).padStart(2, "0")
+      });
+    }
+    add(mesAtual, 5, "receita", null, 3200, "salário");
+    add(mesAtual, 6, "despesa", "necessidade", 900, "aluguel");
+    add(mesAtual, 9, "despesa", "necessidade", 480.5, "mercado");
+    add(mesAtual, 12, "despesa", "necessidade", 210, "conta de luz");
+    add(mesAtual, 14, "despesa", "desejo", 180, "restaurante");
+    add(mesAtual, 15, "despesa", "desejo", 39.9, "streaming");
+    add(mesAtual, 18, "despesa", "desejo", 440, "roupas");
+    add(mesAtual, 19, "despesa", "poupanca", 400, "reserva de emergência");
+
+    add(mesAnterior, 5, "receita", null, 3200, "salário");
+    add(mesAnterior, 6, "despesa", "necessidade", 900, "aluguel");
+    add(mesAnterior, 10, "despesa", "necessidade", 620, "mercado");
+    add(mesAnterior, 13, "despesa", "necessidade", 150, "conta de luz");
+    add(mesAnterior, 16, "despesa", "desejo", 300, "viagem de fim de semana");
+    add(mesAnterior, 20, "despesa", "poupanca", 640, "reserva de emergência");
+  }
+
+  function achar(id) {
+    const item = banco.find(function (t) { return String(t.id) === String(id); });
+    if (!item) { throw new Error("Transação não encontrada"); }
+    return item;
+  }
+
+  return {
+    async listar() { iniciar(); await pausa(); return banco.map(function (t) { return Object.assign({}, t); }); },
+    async criar(p) {
+      iniciar(); await pausa();
+      const novoId = banco.reduce(function (maior, t) { return Math.max(maior, t.id); }, 0) + 1;
+      banco.push({ id: novoId, operacao: p.operacao, categoria: p.categoria, valor: Number(p.valor), descricao: p.descricao.toLowerCase(), data: p.data });
+      return { mensagem: "Transação criada com sucesso", id: novoId };
+    },
+    async atualizar(id, p) {
+      iniciar(); await pausa();
+      const item = achar(id);
+      item.operacao = p.operacao; item.categoria = p.categoria;
+      item.valor = Number(p.valor); item.descricao = p.descricao.toLowerCase(); item.data = p.data;
+      return { mensagem: "Transação atualizada com sucesso" };
+    },
+    async excluir(id) {
+      iniciar(); await pausa();
+      const item = achar(id);
+      banco.splice(banco.indexOf(item), 1);
+      return { mensagem: "Transação excluída com sucesso" };
+    }
+  };
+})();
+
+function apiAtual() { return estado.demo ? apiDemo : apiReal; }
+
+/* ==================================================================
+   5. CÁLCULOS DO 50/30/20
+   As porcentagens são sempre sobre a RECEITA do mês.
+   ================================================================== */
+function transacoesDoMes() {
+  return estado.transacoes.filter(function (t) { return t.data.slice(0, 7) === estado.mes; });
+}
+
+function calcularResumo(lista) {
+  const resumo = { receitas: 0, categorias: { necessidade: 0, desejo: 0, poupanca: 0 }, despesas: 0, sobra: 0 };
+  lista.forEach(function (t) {
+    if (t.operacao === "receita") {
+      resumo.receitas += t.valor;
+    } else if (t.operacao === "despesa" && resumo.categorias[t.categoria] !== undefined) {
+      resumo.categorias[t.categoria] += t.valor;
+    }
+  });
+  resumo.receitas = arredondar(resumo.receitas);
+  CATEGORIAS.forEach(function (cat) {
+    resumo.categorias[cat] = arredondar(resumo.categorias[cat]);
+    resumo.despesas += resumo.categorias[cat];
+  });
+  resumo.despesas = arredondar(resumo.despesas);
+  resumo.sobra = arredondar(resumo.receitas - resumo.despesas);
+  return resumo;
+}
+
+function statusDaCategoria(cat, resumo) {
+  if (resumo.receitas <= 0) { return { texto: "Sem receita neste mês", classe: "" }; }
+
+  const alvo = arredondar(resumo.receitas * METAS[cat]);
+  const diferenca = arredondar(resumo.categorias[cat] - alvo);
+
+  if (cat === "poupanca") {
+    // poupança é um piso: quanto mais, melhor
+    if (diferenca === 0) { return { texto: "Meta batida", classe: "ok" }; }
+    if (diferenca > 0) { return { texto: "Meta batida, " + moeda(diferenca) + " a mais", classe: "ok" }; }
+    return { texto: "Faltam " + moeda(-diferenca) + " para a meta", classe: "alerta" };
+  }
+
+  // necessidades e desejos são um teto: passar dele é o alerta
+  if (diferenca === 0) { return { texto: "Exatamente na meta", classe: "ok" }; }
+  if (diferenca < 0) { return { texto: "Dentro da meta, ainda cabem " + moeda(-diferenca), classe: "ok" }; }
+  return { texto: "Passou da meta em " + moeda(diferenca), classe: "alerta" };
+}
+
+/* ==================================================================
+   6. DESENHO DA TELA
+   ================================================================== */
+function arco(anel, inicio, fracao, cat, opacidade, atraso) {
+  if (fracao <= 0) { return ""; }
+  const circunferencia = 2 * Math.PI * anel.raio;
+  const folga = 2;                                           // espacinho entre as fatias
+  const comprimento = Math.max(fracao * circunferencia - folga, 0.5);
+  const deslocamento = -(inicio * circunferencia + folga / 2);
+  return '<circle class="arco" cx="120" cy="120" r="' + anel.raio + '" stroke-width="' + anel.espessura + '"' +
+    ' transform="rotate(-90 120 120)"' +
+    ' style="stroke:' + COR_CATEGORIA[cat] + ";opacity:" + opacidade +
+    ";stroke-dasharray:0 " + circunferencia + ";stroke-dashoffset:" + deslocamento +
+    ";transition-delay:" + atraso + 's"' +
+    ' data-comprimento="' + comprimento + '" data-circunferencia="' + circunferencia + '"/>';
+}
+
+function renderAnel(resumo) {
+  const svg = el("anel");
+  const anelMeta = { raio: 106, espessura: 8 };
+  const anelReal = { raio: 82, espessura: 26 };
+
+  let html = "";
+  html += '<circle class="trilho" cx="120" cy="120" r="' + anelMeta.raio + '" stroke-width="' + anelMeta.espessura + '"/>';
+  html += '<circle class="trilho" cx="120" cy="120" r="' + anelReal.raio + '" stroke-width="' + anelReal.espessura + '"/>';
+
+  // anel de fora: a meta 50/30/20
+  let inicio = 0;
+  CATEGORIAS.forEach(function (cat, i) {
+    html += arco(anelMeta, inicio, METAS[cat], cat, 0.65, i * 0.12);
+    inicio += METAS[cat];
+  });
+
+  // anel de dentro: o que foi realmente gasto, como fração da receita
+  let acumulado = 0;
+  if (resumo.receitas > 0) {
+    CATEGORIAS.forEach(function (cat, i) {
+      const fracao = resumo.categorias[cat] / resumo.receitas;
+      const cabe = Math.max(Math.min(fracao, 1 - acumulado), 0);   // o anel não passa de 100%
+      html += arco(anelReal, acumulado, cabe, cat, 1, 0.4 + i * 0.15);
+      acumulado += cabe;
+    });
+  }
+
+  const centro = resumo.receitas > 0 ? moeda(resumo.receitas) : "Sem receita";
+  html += '<text class="anel-rotulo" x="120" y="112" text-anchor="middle">Receitas do mês</text>';
+  html += '<text class="anel-valor" x="120" y="142" text-anchor="middle">' + escaparHtml(centro) + '</text>';
+  svg.innerHTML = html;
+
+  // descrição para leitores de tela
+  let descricao = "Receitas do mês: " + (resumo.receitas > 0 ? moeda(resumo.receitas) : "nenhuma") + ".";
+  if (resumo.receitas > 0) {
+    descricao += CATEGORIAS.map(function (cat) {
+      return " " + NOME_CATEGORIA[cat] + ": " + Math.round(resumo.categorias[cat] / resumo.receitas * 100) +
+        "% da renda, meta " + METAS[cat] * 100 + "%.";
+    }).join("");
+  }
+  svg.setAttribute("aria-label", descricao);
+
+  // começa com as fatias "vazias" e enche no quadro seguinte, para a transição acontecer
+  requestAnimationFrame(function () {
+    requestAnimationFrame(function () {
+      svg.querySelectorAll(".arco").forEach(function (a) {
+        a.style.strokeDasharray = a.dataset.comprimento + " " + a.dataset.circunferencia;
+      });
+    });
+  });
+}
+
+function renderCategorias(resumo) {
+  let html = "";
+  CATEGORIAS.forEach(function (cat) {
+    const valor = resumo.categorias[cat];
+    const fracaoReal = resumo.receitas > 0 ? valor / resumo.receitas : 0;
+    const pctTexto = resumo.receitas > 0 ? Math.round(fracaoReal * 100) + "%" : "—";
+    // a barra vai de 0 a 150% da meta; a marca fica exatamente em 100% da meta
+    const largura = Math.min(fracaoReal / METAS[cat] / 1.5, 1) * 100;
+    const status = statusDaCategoria(cat, resumo);
+
+    html += '<div class="cat">' +
+      '<div class="cat-topo">' +
+        '<span class="cat-nome"><span class="ponto" style="background:' + COR_CATEGORIA[cat] + '"></span>' + NOME_CATEGORIA[cat] + '</span>' +
+        '<span class="cat-pct">' + pctTexto + '<span class="cat-meta">meta ' + METAS[cat] * 100 + '%</span></span>' +
+      '</div>' +
+      '<div class="barra"><div class="barra-fill" style="width:' + largura + '%;background:' + COR_CATEGORIA[cat] + '"></div>' +
+        '<div class="barra-marca" style="left:' + (100 / 1.5) + '%"></div></div>' +
+      '<div class="cat-base"><span class="cat-valor">' + moeda(valor) + '</span>' +
+        '<span class="cat-status ' + status.classe + '">' + status.texto + '</span></div>' +
+    '</div>';
+  });
+
+  if (resumo.receitas > 0 && resumo.despesas > resumo.receitas) {
+    html += '<p class="cat-aviso">As despesas passaram da receita em ' + moeda(resumo.despesas - resumo.receitas) + '.</p>';
+  }
+  el("categorias").innerHTML = html;
+}
+
+function renderResumo(resumo) {
+  el("resumo").innerHTML =
+    '<div class="resumo-item"><div class="resumo-rotulo">Receitas</div><div class="resumo-valor">' + moeda(resumo.receitas) + '</div></div>' +
+    '<div class="resumo-item"><div class="resumo-rotulo">Despesas</div><div class="resumo-valor">' + moeda(resumo.despesas) + '</div></div>' +
+    '<div class="resumo-item"><div class="resumo-rotulo">Sobra do mês</div><div class="resumo-valor' +
+      (resumo.sobra < 0 ? " negativo" : "") + '">' + moedaComSinal(resumo.sobra) + '</div></div>';
+}
+
+function htmlDaLinha(t) {
+  const descricao = escaparHtml(capitalizar(t.descricao));
+  const ehReceita = t.operacao === "receita";
+  const classeChip = ehReceita ? "receita" : (t.categoria || "sem");
+  const textoChip = ehReceita ? "Receita" : (NOME_CHIP[t.categoria] || "Sem categoria");
+  const sinal = ehReceita ? "+ " : "− ";
+
+  return '<li class="linha" data-id="' + escaparHtml(t.id) + '">' +
+    '<span class="linha-data">' + dataCurta(t.data) + '</span>' +
+    '<span class="linha-desc">' + descricao + '</span>' +
+    '<span class="chip chip--' + classeChip + '">' + textoChip + '</span>' +
+    '<span class="linha-valor' + (ehReceita ? " linha-valor--receita" : "") + '">' + sinal + moeda(t.valor) + '</span>' +
+    '<span class="linha-acoes">' +
+      '<button type="button" class="acao" data-acao="editar" aria-label="Editar ' + descricao + '">Editar</button>' +
+      '<button type="button" class="acao acao--excluir" data-acao="excluir" aria-label="Excluir ' + descricao + '">Excluir</button>' +
+    '</span>' +
+  '</li>';
+}
+
+function renderLista(doMes) {
+  let visiveis = doMes;
+  if (estado.filtro !== "todas") {
+    visiveis = doMes.filter(function (t) { return t.operacao === estado.filtro; });
+  }
+  visiveis = visiveis.slice().sort(function (a, b) {
+    return b.data.localeCompare(a.data) || Number(b.id) - Number(a.id);
+  });
+
+  el("lista").innerHTML = visiveis.map(htmlDaLinha).join("");
+
+  const vazio = el("lista-vazia");
+  if (visiveis.length > 0) {
+    vazio.hidden = true;
+  } else {
+    vazio.hidden = false;
+    if (doMes.length === 0) {
+      vazio.textContent = "Nenhum lançamento em " + rotuloDoMes(estado.mes) + ". Use “Nova transação” para registrar o primeiro.";
+    } else {
+      vazio.textContent = estado.filtro === "receita" ? "Nenhuma receita neste mês." : "Nenhuma despesa neste mês.";
+    }
+  }
+
+  document.querySelectorAll(".filtro").forEach(function (botao) {
+    botao.setAttribute("aria-pressed", String(botao.dataset.filtro === estado.filtro));
+  });
+}
+
+function renderAviso() {
+  const aviso = el("aviso");
+  aviso.innerHTML = "";
+
+  function botao(rotulo, acao) {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "botao-secundario"; b.textContent = rotulo;
+    b.addEventListener("click", acao);
+    return b;
+  }
+
+  if (estado.erroCarga) {
+    aviso.className = "aviso aviso--erro";
+    const p = document.createElement("p");
+    p.textContent = "Não consegui carregar as transações. " + estado.erroCarga +
+      " Esta tela lista as transações pela rota GET " + CONFIG.ROTA + ".";
+    aviso.appendChild(p);
+    aviso.appendChild(botao("Tentar de novo", carregar));
+    aviso.appendChild(botao("Ver dados de exemplo", function () { estado.demo = true; carregar(); }));
+    aviso.hidden = false;
+  } else if (estado.demo) {
+    aviso.className = "aviso";
+    const p = document.createElement("p");
+    p.textContent = "Você está vendo dados de exemplo. Nada do que você fizer aqui é enviado para a sua API.";
+    aviso.appendChild(p);
+    aviso.appendChild(botao("Usar a minha API", function () { estado.demo = false; carregar(); }));
+    aviso.hidden = false;
+  } else {
+    aviso.hidden = true;
+  }
+
+  el("btn-demo").hidden = estado.demo;
+}
+
+function renderTudo() {
+  const doMes = transacoesDoMes();
+  const resumo = calcularResumo(doMes);
+  el("mes-rotulo").textContent = rotuloDoMes(estado.mes);
+  renderAnel(resumo);
+  renderCategorias(resumo);
+  renderResumo(resumo);
+  renderLista(doMes);
+}
+
+/* ==================================================================
+   7. CARREGAR DADOS
+   ================================================================== */
+async function carregar() {
+  const vazio = el("lista-vazia");
+  vazio.hidden = false;
+  vazio.textContent = "Carregando transações…";
+  el("lista").innerHTML = "";
+
+  try {
+    estado.transacoes = await apiAtual().listar();
+    estado.erroCarga = null;
+  } catch (erro) {
+    estado.transacoes = [];
+    estado.erroCarga = erro.message;
+  }
+  renderAviso();
+  renderTudo();
+}
+
+/* ==================================================================
+   8. AVISOS RÁPIDOS (toast)
+   ================================================================== */
+let temporizadorToast = null;
+function toast(texto, ehErro) {
+  const caixa = el("toast");
+  caixa.textContent = texto;
+  caixa.className = "toast" + (ehErro ? " toast--erro" : "");
+  caixa.hidden = false;
+  clearTimeout(temporizadorToast);
+  temporizadorToast = setTimeout(function () { caixa.hidden = true; }, 4500);
+}
+
+/* ==================================================================
+   9. FORMULÁRIO: nova transação e editar
+   ================================================================== */
+function operacaoSelecionada() {
+  return document.querySelector('input[name="operacao"]:checked').value;
+}
+
+function atualizarCampoCategoria() {
+  el("campo-categoria").hidden = operacaoSelecionada() === "receita";
+}
+
+function mostrarErroForm(texto) {
+  const caixa = el("erro-form");
+  caixa.textContent = texto;
+  caixa.hidden = false;
+}
+
+function abrirForm(transacao) {
+  estado.editando = transacao;
+  el("erro-form").hidden = true;
+  el("dlg-form-titulo").textContent = transacao ? "Editar transação" : "Nova transação";
+
+  if (transacao) {
+    el(transacao.operacao === "receita" ? "op-receita" : "op-despesa").checked = true;
+    el("categoria").value = transacao.categoria || "necessidade";
+    el("valor").value = transacao.valor.toFixed(2).replace(".", ",");
+    el("descricao").value = capitalizar(transacao.descricao);
+    el("data").value = transacao.data;
+  } else {
+    el("op-despesa").checked = true;
+    el("categoria").value = "necessidade";
+    el("valor").value = "";
+    el("descricao").value = "";
+    // se o mês na tela não é o de hoje, a data começa no dia 1 dele
+    const hoje = dataDeHoje();
+    el("data").value = hoje.slice(0, 7) === estado.mes ? hoje : estado.mes + "-01";
+  }
+  atualizarCampoCategoria();
+  el("dlg-form").showModal();
+  el("valor").focus();
+}
+
+// "1.234,50" -> "1234.50". Devolve null se o texto não for um valor válido.
+function normalizarValor(texto) {
+  let v = texto.trim().replace(/\s/g, "").replace(/^R\$/i, "");
+  if (v.includes(",")) { v = v.replace(/\./g, "").replace(",", "."); }
+  if (!/^\d+(\.\d{1,2})?$/.test(v)) { return null; }
+  if (Number(v) <= 0) { return null; }
+  return v;
+}
+
+/* Monta o corpo que a API espera. Regras que a API já cobra e que a tela respeita:
+   - valor vai como TEXTO;
+   - receita leva categoria null (explícito);
+   - despesa leva uma das três categorias;
+   - operacao e categoria vão sempre juntas (também na edição). */
+function lerFormulario() {
+  const operacao = operacaoSelecionada();
+  const valor = normalizarValor(el("valor").value);
+  const descricao = el("descricao").value.trim();
+  const data = el("data").value;
+
+  if (valor === null) { return { erro: "Digite o valor com até duas casas decimais, como 150,00." }; }
+  if (descricao === "") { return { erro: "Escreva uma descrição." }; }
+  if (data === "") { return { erro: "Escolha a data." }; }
+
+  return {
+    payload: {
+      operacao: operacao,
+      valor: valor,
+      categoria: operacao === "despesa" ? el("categoria").value : null,
+      descricao: descricao,
+      data: data
+    }
+  };
+}
+
+async function salvarFormulario(evento) {
+  evento.preventDefault();
+  el("erro-form").hidden = true;
+
+  const lido = lerFormulario();
+  if (lido.erro) { mostrarErroForm(lido.erro); return; }
+
+  const botaoSalvar = el("salvar-form");
+  botaoSalvar.disabled = true;
+  try {
+    if (estado.editando) {
+      await apiAtual().atualizar(estado.editando.id, lido.payload);
+    } else {
+      await apiAtual().criar(lido.payload);
+    }
+    el("dlg-form").close();
+    estado.mes = lido.payload.data.slice(0, 7);   // mostra o mês onde a transação caiu
+    await carregar();
+    toast("Transação salva.");
+  } catch (erro) {
+    mostrarErroForm(erro.message);
+  } finally {
+    botaoSalvar.disabled = false;
+  }
+}
+
+/* ==================================================================
+   10. EXCLUIR
+   ================================================================== */
+function abrirConfirmacaoDeExclusao(transacao) {
+  estado.excluindo = transacao;
+  el("excluir-texto").textContent =
+    capitalizar(transacao.descricao) + ", " + moeda(transacao.valor) + ", " + dataCurta(transacao.data) +
+    ". Essa transação será apagada e não dá para desfazer.";
+  el("dlg-excluir").showModal();
+}
+
+async function confirmarExclusao() {
+  const alvo = estado.excluindo;
+  if (!alvo) { return; }
+  const botao = el("confirmar-excluir");
+  botao.disabled = true;
+  try {
+    await apiAtual().excluir(alvo.id);
+    el("dlg-excluir").close();
+    await carregar();
+    toast("Transação excluída.");
+  } catch (erro) {
+    el("dlg-excluir").close();
+    toast(erro.message, true);
+    await carregar();
+  } finally {
+    botao.disabled = false;
+    estado.excluindo = null;
+  }
+}
+
+/* ==================================================================
+   11. LIGAR OS BOTÕES
+   ================================================================== */
+el("btn-nova").addEventListener("click", function () { abrirForm(null); });
+
+el("btn-demo").addEventListener("click", function () { estado.demo = true; carregar(); });
+
+el("mes-anterior").addEventListener("click", function () { estado.mes = deslocarMes(estado.mes, -1); renderTudo(); });
+el("mes-proximo").addEventListener("click", function () { estado.mes = deslocarMes(estado.mes, 1); renderTudo(); });
+
+document.querySelectorAll(".filtro").forEach(function (botao) {
+  botao.addEventListener("click", function () { estado.filtro = botao.dataset.filtro; renderLista(transacoesDoMes()); });
+});
+
+// um único "ouvinte" na lista cuida dos botões Editar e Excluir de todas as linhas
+el("lista").addEventListener("click", function (evento) {
+  const botao = evento.target.closest("button[data-acao]");
+  if (!botao) { return; }
+  const linha = botao.closest(".linha");
+  const transacao = estado.transacoes.find(function (t) { return String(t.id) === linha.dataset.id; });
+  if (!transacao) { return; }
+
+  if (botao.dataset.acao === "editar") { abrirForm(transacao); }
+  if (botao.dataset.acao === "excluir") { abrirConfirmacaoDeExclusao(transacao); }
+});
+
+document.querySelectorAll('input[name="operacao"]').forEach(function (radio) {
+  radio.addEventListener("change", atualizarCampoCategoria);
+});
+el("form").addEventListener("submit", salvarFormulario);
+el("cancelar-form").addEventListener("click", function () { el("dlg-form").close(); });
+el("cancelar-excluir").addEventListener("click", function () { el("dlg-excluir").close(); });
+el("confirmar-excluir").addEventListener("click", confirmarExclusao);
+
+carregar();
+</script>
+</body>
+</html>
