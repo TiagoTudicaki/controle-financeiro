@@ -1,3 +1,4 @@
+const { excluir } = require("../controllers/transacoesController");
 const transacoesModel = require("../models/transacoesModel");
 const consultaFiltrada = require("../utils/filtragemDeConsulta");
 const transacoesService = {
@@ -107,7 +108,11 @@ const transacoesService = {
   },
 
   async atualizar(dadoTransacao) {
+
+
     const { id, operacao, valor, categoria, descricao, data } = dadoTransacao;
+
+
     //----id-----
 
     if (typeof id != "number" && typeof id != "string") {
@@ -253,6 +258,27 @@ const transacoesService = {
       await transacoesModel.atualizar(transacaoValidada);
     return atualizarTransacao;
   },
+
+  async excluir(id){
+
+    if (typeof id != "number" && typeof id != "string") {
+      throw new Error("ID inválido");
+    }
+    const id_ApenasDigitos = /^[0-9]+$/.test(id);
+
+    if (!id_ApenasDigitos) {
+      throw new Error("Id deve ser numeros inteiros e positivos");
+    }
+
+    const id_Numerico = Number(id);
+
+    if (id_Numerico == 0) {
+      throw new Error("Id deve ser maior que zero");
+    }
+
+    const excluirTransacao = await transacoesModel.excluir(id_Numerico);
+    return excluirTransacao;
+  }
 };
 
 module.exports = transacoesService;
