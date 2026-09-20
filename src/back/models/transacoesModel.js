@@ -1,5 +1,6 @@
 const e = require("express");
 const db = require("../config/database");
+const { excluir } = require("../controllers/transacoesController");
 
 const transacoesModel = {
   async criar(dados) {
@@ -93,7 +94,14 @@ const transacoesModel = {
 
     const [resultado] = await db.query(`UPDATE transacoes SET ${campos.join(", ")} WHERE id = ?`, valores);
     return resultado;
+  },
+
+  async excluir(id_Numerico){
+
+    const [resultado] = await db.query("DELETE FROM transacoes WHERE id = ?",id_Numerico);
+    return resultado;
   }
+
 
   
 };
