@@ -73,6 +73,9 @@ const transacoesController = {
       }
 
       const atualizarTransacao = await transacoesService.atualizar(dadoTransacao);
+      if (atualizarTransacao.affectedRows === 0) {
+  return res.status(404).json({ mensagem: "Transação não encontrada" });
+}
       return res.status(200).json(atualizarTransacao);
     }catch(erro){
       res.status(400).json({mensagem: erro.message});
