@@ -1,3 +1,4 @@
+const { excluir } = require("../../../../sistema-ordens/src/models/clienteModel");
 const transacoesService = require("../services/transacoesService");
 
 const transacoesController = {
@@ -79,6 +80,26 @@ const transacoesController = {
       return res.status(200).json(atualizarTransacao);
     }catch(erro){
       res.status(400).json({mensagem: erro.message});
+    }
+  },
+
+  async excluir(req, res){
+    try{
+      if(Object.keys(req.params).length === 0){
+        const erro = new Error("É necessário existir o id");
+        throw erro;
+      }
+
+      const{id} = req.params;
+
+      const excluirTransacao = await transacoesService.excluir(id);
+      if (excluirTransacao.affectedRows === 0) {
+  return res.status(404).json({ mensagem: "Transação não encontrada" });
+}
+      return res.status(200).json(excluirTransacao);
+
+    }catch(erro){
+      return res.status(400).json({mensagem: erro.message});
     }
   }
 };
