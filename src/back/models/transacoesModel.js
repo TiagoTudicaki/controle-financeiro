@@ -1,3 +1,4 @@
+const e = require("express");
 const db = require("../config/database");
 
 const transacoesModel = {
@@ -49,6 +50,52 @@ const transacoesModel = {
     const [resultado] = await db.query(sql, valores);
     return resultado;
   },
+
+  async atualizar(transacaoValidada){
+    const{id, operacao, valor, categoria, descricao, data} = transacaoValidada;
+
+    const campos = [];
+    const valores = [];
+
+    
+
+    if(operacao != null){
+      campos.push("operacao = ?");
+      valores.push(operacao);
+    }
+
+    if(valor != null){
+      campos.push("valor = ?");
+      valores.push(valor);
+    }
+
+    if(categoria !== undefined){
+      campos.push("categoria = ?");
+      valores.push(categoria);
+    }
+
+    if(descricao != null){
+      campos.push("descricao = ?");
+      valores.push(descricao);
+    }
+
+    if(data != null){
+      campos.push("data = ?");
+      valores.push(data);
+    }
+
+    valores.push(id);
+
+    if (campos.length === 0){
+       throw new Error("É necessário atualizar pelo menos um campo");
+      
+    }
+
+    const [resultado] = await db.query(`UPDATE transacoes SET ${campos.join(", ")} WHERE id = ?`, valores);
+    return resultado;
+  }
+
+  
 };
 
 module.exports = transacoesModel;
